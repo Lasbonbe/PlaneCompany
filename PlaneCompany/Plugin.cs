@@ -1,17 +1,27 @@
-﻿using BepInEx;
+﻿using System.Collections;
+using System.Reflection;
+using System.IO;
+
+using BepInEx;
 using BepInEx.Logging;
+using HarmonyLib;
+using LethalLib.Modules;
+using UnityEngine;
 
 namespace PlaneCompany;
 
 [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
-public class Plugin : BaseUnityPlugin
-{
-    internal static new ManualLogSource Logger;
+[BepInDependency(LethalLib.Plugin.ModGUID)] 
 
-    private void Awake()
-    {
-        // Plugin startup logic
+public class PlaneCompanyMod : BaseUnityPlugin {
+    
+    internal static new ManualLogSource Logger;
+    private readonly Harmony harmony = new Harmony(MyPluginInfo.PLUGIN_GUID);
+    private static PlaneCompanyMod instance;
+    
+    private void Awake() {
         Logger = base.Logger;
+        if (instance == null) instance = this;
 
         string[] asciiArtLines = new string[]
         {
@@ -35,11 +45,14 @@ public class Plugin : BaseUnityPlugin
             "                                         `'`",
         };
 
-        foreach (string line in asciiArtLines)
+        foreach (var line in asciiArtLines)
         {
             Logger.LogInfo(line);
         }
         Logger.LogInfo($"Plugin {MyPluginInfo.PLUGIN_GUID} is loaded!");
-
+        
+        string assetDir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "PlaneCompany");
+        AssetBundle bundle = AssetBundle.LoadFromFile(assetDir);
+        Harmony.CreateAndPatchAll(typeof(PlaneCompanyMod));
     }
 }
